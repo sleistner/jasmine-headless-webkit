@@ -66,7 +66,7 @@ describe Jasmine::Headless::FilesList do
     let(:path) { 'path' }
 
     before do
-      Jasmine::Headless::FilesList.stubs(:vendor_asset_paths).returns([])
+      Jasmine::Headless::FilesList.stubs(:asset_pipeline_paths).returns([])
     end
 
     let(:vendor_path) { Jasmine::Headless.root.join('vendor/assets/javascripts').to_s }
@@ -79,7 +79,7 @@ describe Jasmine::Headless::FilesList do
 
     context 'vendored gem paths' do
       before do
-        Jasmine::Headless::FilesList.stubs(:vendor_asset_paths).returns([ path ])
+        Jasmine::Headless::FilesList.stubs(:asset_pipeline_paths).returns([ path ])
       end
 
       it 'should add the vendor gem paths to the list' do
@@ -110,25 +110,28 @@ describe Jasmine::Headless::FilesList do
     end
   end
 
-  describe '.vendor_asset_paths' do
+  describe '.asset_pipeline_paths' do
     include FakeFS::SpecHelpers
 
     let(:dir_one) { 'dir_one' }
     let(:dir_two) { 'dir_two' }
+    let(:dir_three) { 'dir_three' }
 
     let(:gem_one) { stub(:gem_dir => dir_one) }
     let(:gem_two) { stub(:gem_dir => dir_two) }
+    let(:gem_three) { stub(:gem_dir => dir_three) }
 
     before do
-      described_class.instance_variable_set(:@vendor_asset_paths, nil)
+      described_class.instance_variable_set(:@asset_pipeline_paths, nil)
 
       FileUtils.mkdir_p File.join(dir_two, 'vendor/assets/javascripts')
+      FileUtils.mkdir_p File.join(dir_three, 'lib/assets/javascripts')
 
-      Gem::Specification.stubs(:_all).returns([gem_one, gem_two])
+      Gem::Specification.stubs(:_all).returns([gem_one, gem_two, gem_three])
     end
 
-    it 'should return all matching gems with vendor/assets/javascripts directories' do
-      described_class.vendor_asset_paths.should == [ File.join(dir_two, 'vendor/assets/javascripts') ]
+    it 'should return all matching gems with {lib|vendor}/assets/javascripts directories' do
+      described_class.asset_pipeline_paths.should == [ File.join(dir_two, 'vendor/assets/javascripts'), File.join(dir_three, 'lib/assets/javascripts') ]
     end
   end
 

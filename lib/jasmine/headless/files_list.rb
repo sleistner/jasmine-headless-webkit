@@ -9,26 +9,30 @@ module Jasmine::Headless
   
   class FilesList
     class << self
-      def vendor_asset_paths
-        return @vendor_asset_paths if @vendor_asset_paths
+      
+      def asset_pipeline_paths
+        return @asset_pipeline_paths if @asset_pipeline_paths
 
         require 'rubygems'
 
         raise StandardError.new("A newer version of Rubygems is required to use vendored assets. Please upgrade.") if !Gem::Specification.respond_to?(:each)
 
-        @vendor_asset_paths = []
+        @asset_pipeline_paths = []
 
         Gem::Specification.each do |spec|
-          path = File.join(spec.gem_dir, 'vendor/assets/javascripts')
-
-          @vendor_asset_paths << path if File.directory?(path) && !@vendor_asset_paths.include?(path)
+          ['lib', 'vendor'].each do |d|
+            path = File.join(spec.gem_dir, "#{d}/assets/javascripts")
+            if File.directory?(path) && !@asset_pipeline_paths.include?(path)
+              @asset_pipeline_paths << path
+            end
+          end
         end
 
-        @vendor_asset_paths
+        @asset_pipeline_paths
       end
 
       def reset!
-        @vendor_asset_paths = nil
+        @asset_pipeline_paths = nil
 
         # register haml-sprockets if it's available...
         %w{haml-sprockets}.each do |library|
@@ -97,7 +101,7 @@ module Jasmine::Headless
       return @search_paths if @search_paths
 
       @search_paths = [ Jasmine::Core.path, Jasmine::Headless.root.join('vendor/assets/javascripts').to_s ]
-      @search_paths += self.class.vendor_asset_paths
+      @search_paths += self.class.asset_pipeline_paths
       @search_paths += src_dir.collect { |dir| File.expand_path(dir) }
       @search_paths += asset_paths.collect { |dir| File.expand_path(dir) }
       @search_paths += spec_dir.collect { |dir| File.expand_path(dir) }
